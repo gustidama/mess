@@ -1,0 +1,38 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract DecentralizedIdentity {
+    struct Identity {
+        address owner;
+        bool isRevoked;
+        mapping(string => string) attributes;
+    }
+
+    mapping(bytes32 => Identity) public identities;
+
+    event DIDCreated(bytes32 indexed did, address indexed owner);
+    event DIDAttributeAdded(bytes32 indexed did, string key, string value);
+    event DIDRevoked(bytes32 indexed did);
+
+    function createDID(bytes32 _did) external {
+        require(identities[_did].owner == address(0), "DID already exists");
+        identities[_did].owner = msg.sender;
+        emit DIDCreated(_did, msg.sender);
+    }
+
+    function addAttribute(bytes32 _did, string memory _key, string memory _value) external {
+        require(identities[_did].owner == msg.sender, "Only owner can add attributes");
+        identities[_did].attributes[_key] = _value;
+        emit DIDAttributeAdded(_did, _key, _value);
+    }
+
+    function getAttribute(bytes32 _did, string memory _key) external view returns (string memory) {
+        return identities[_did].attributes[_key];
+    }
+
+    function revokeDID(bytes32 _did) external {
+        require(identities[_did].owner == msg.sender, "Only owner can revoke DID");
+        identities[_did].isRevoked = true;
+        emit DIDRevoked(_did);
+    }
+}
